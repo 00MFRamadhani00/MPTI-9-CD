@@ -12,35 +12,35 @@ class CriteriaSeed extends Seeder
         $kriteria = new CriteriaModel();
 
         $kriteria->save([
-            'nama'          =>  'Pengalaman Kerja',
+            'nama_kriteria'          =>  'Pengalaman Kerja',
             'bobot'         =>  0.2
         ]);
         $kriteria->save([
-            'nama'          =>  'Pendidikan',
+            'nama_kriteria'          =>  'Pendidikan',
             'bobot'         =>  0.15
         ]);
         $kriteria->save([
-            'nama'          =>  'Keterampilan Komunikasi',
+            'nama_kriteria'          =>  'Keterampilan Komunikasi',
             'bobot'         =>  0.15
         ]);
         $kriteria->save([
-            'nama'          =>  'Keterampilan Manajerial',
+            'nama_kriteria'          =>  'Keterampilan Manajerial',
             'bobot'         =>  0.15
         ]);
         $kriteria->save([
-            'nama'          =>  'Keterampilan Teknis',
+            'nama_kriteria'          =>  'Keterampilan Teknis',
             'bobot'         =>  0.1
         ]);
         $kriteria->save([
-            'nama'          =>  'Keterampilan Analitis',
+            'nama_kriteria'          =>  'Keterampilan Analitis',
             'bobot'         =>  0.1
         ]);
         $kriteria->save([
-            'nama'          =>  'Ketepatan Waktu',
+            'nama_kriteria'          =>  'Ketepatan Waktu',
             'bobot'         =>  0.1
         ]);
         $kriteria->save([
-            'nama'          =>  'Kinerja',
+            'nama_kriteria'          =>  'Kinerja',
             'bobot'         =>  0.05
         ]);
     }
