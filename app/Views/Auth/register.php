@@ -45,7 +45,7 @@
                     <input class="form-control form-control-lg" type="email" name="email" placeholder="E-mail" required>
                 </div>
                 <div class="form-group">
-                    <input class="form-control form-control-lg" type="text" name="username" placeholder="Username" required>
+                    <input class="form-control form-control-lg" type="number" name="username" placeholder="Username" min="1000000000" max="9999999999" required>
                 </div>
                 <div class="form-group">
                     <input class="form-control form-control-lg" type="password" name="password" placeholder="Password" autocomplete="off" required>

@@ -131,7 +131,7 @@
                                     <div id="submenu-3" class="collapse submenu">
                                         <ul class="nav flex-column">
                                             <li class="nav-item">
-                                                <a class="nav-link" href="<?= base_url('/') ?>">Perhitungan TOPSIS</a>
+                                                <a class="nav-link" href="<?= base_url('/topsis-form') ?>">Perhitungan TOPSIS</a>
                                             </li>
                                         </ul>
                                     </div>

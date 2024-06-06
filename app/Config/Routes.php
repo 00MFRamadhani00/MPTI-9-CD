@@ -42,6 +42,8 @@ $routes->get('/ranking-list', 'Home::rangkingList');
 // Admin Routes
 $routes->get('/user-list', 'AdminController::karyawanList', ['filter' => 'role:admin']);
 $routes->get('/user-detail/(:num)', 'AdminController::karyawanDetail/$1', ['filter' => 'role:admin']);
+$routes->get('/topsis-form', 'AdminController::topsisForm', ['filter' => 'role:admin']);
+$routes->post('/calculate-topsis', 'AdminController::calculate', ['filter' => 'role:admin']);
 $routes->delete('/user-delete/(:num)', 'AdminController::deleteUser/$1', ['filter' => 'role:admin']);
 
 // Karyawan Routes
