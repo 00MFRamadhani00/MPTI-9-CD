@@ -18,7 +18,7 @@
                 <table id="dtexport1" class="table table-striped">
                     <thead>
                         <tr>
-                            <th scope="col">NIP</th>
+                            <th scope="col">Username</th>
                             <th scope="col">Nama karyawan</th>
                             <th scope="col">Poin Hasil</th>
                         </tr>

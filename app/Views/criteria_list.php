@@ -18,8 +18,8 @@
                     <table id="datatable1" class="table table-striped">
                         <thead>
                             <tr>
-                                <th>NIP</th>
-                                <th>Email</th>
+                                <th>Keterangan</th>
+                                <th>Bobot</th>
                             </tr>
                         </thead>
                         <tbody>

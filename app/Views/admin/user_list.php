@@ -19,7 +19,7 @@
                         <thead>
                             <tr>
                                 <th>No.</th>
-                                <th>NIP</th>
+                                <th>Username</th>
                                 <th>Email</th>
                                 <th>Role</th>
                                 <th>Action</th>
