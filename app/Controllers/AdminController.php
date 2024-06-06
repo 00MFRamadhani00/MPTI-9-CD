@@ -250,68 +250,6 @@ class AdminController extends BaseController
         return view('admin/topsis_result', $data);
     }
 
-    private function topsis($matrix, $weights, $benefit)
-    {
-        $numAlternatives = count($matrix);
-        $numCriteria = count($matrix[0]);
-
-        // Normalisasi matriks keputusan
-        $normalizedMatrix = [];
-        for ($j = 0; $j < $numCriteria; $j++) {
-            $sum = 0;
-            for ($i = 0; $i < $numAlternatives; $i++) {
-                $sum += pow($matrix[$i][$j], 2);
-            }
-            $sqrtSum = sqrt($sum);
-            for ($i = 0; $i < $numAlternatives; $i++) {
-                $normalizedMatrix[$i][$j] = $matrix[$i][$j] / $sqrtSum;
-            }
-        }
-
-        // Menentukan matriks keputusan yang telah ternormalisasi dan tertimbang
-        $weightedNormalizedMatrix = [];
-        for ($i = 0; $i < $numAlternatives; $i++) {
-            for ($j = 0; $j < $numCriteria; $j++) {
-                $weightedNormalizedMatrix[$i][$j] = $normalizedMatrix[$i][$j] * $weights[$j];
-            }
-        }
-
-        // Menentukan solusi ideal positif dan negatif
-        $positiveIdealSolution = [];
-        $negativeIdealSolution = [];
-        for ($j = 0; $j < $numCriteria; $j++) {
-            if ($benefit[$j]) {
-                $positiveIdealSolution[$j] = max(array_column($weightedNormalizedMatrix, $j));
-                $negativeIdealSolution[$j] = min(array_column($weightedNormalizedMatrix, $j));
-            } else {
-                $positiveIdealSolution[$j] = min(array_column($weightedNormalizedMatrix, $j));
-                $negativeIdealSolution[$j] = max(array_column($weightedNormalizedMatrix, $j));
-            }
-        }
-
-        // Menghitung jarak antara masing-masing alternatif dengan solusi ideal positif dan negatif
-        $positiveDistances = [];
-        $negativeDistances = [];
-        for ($i = 0; $i < $numAlternatives; $i++) {
-            $positiveDistances[$i] = 0;
-            $negativeDistances[$i] = 0;
-            for ($j = 0; $j < $numCriteria; $j++) {
-                $positiveDistances[$i] += pow($weightedNormalizedMatrix[$i][$j] - $positiveIdealSolution[$j], 2);
-                $negativeDistances[$i] += pow($weightedNormalizedMatrix[$i][$j] - $negativeIdealSolution[$j], 2);
-            }
-            $positiveDistances[$i] = sqrt($positiveDistances[$i]);
-            $negativeDistances[$i] = sqrt($negativeDistances[$i]);
-        }
-
-        // Menghitung nilai preferensi untuk setiap alternatif
-        $preferences = [];
-        for ($i = 0; $i < $numAlternatives; $i++) {
-            $preferences[$i] = $negativeDistances[$i] / ($positiveDistances[$i] + $negativeDistances[$i]);
-        }
-
-        return $preferences;
-    }
-
 
     public function hasilTopsis()
     {
