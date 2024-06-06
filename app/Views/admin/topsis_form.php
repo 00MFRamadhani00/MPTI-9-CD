@@ -17,29 +17,24 @@
                     <div class="card">
                         <h5 class="card-header">Pilih Karyawan</h5>
                         <div class="card-body">
-                            <form action="<?= base_url('/calculate-topsis') ?>" method="post">
-                                <div class="form-group">
-                                    <select class="form-control" name="karyawan[]" required>
-                                        <option selected disabled>Pilih Karyawan</option>
-                                        <?php foreach ($users as $item) : ?>
+                        <form action="<?= base_url('/calculate-topsis') ?>" method="post">
+                            <div class="form-group">
+                                <select class="form-control" name="karyawan[]" required>
+                                    <option selected disabled>Pilih Karyawan</option>
+                                    <?php foreach ($users as $item) : ?>
                                         <option value="<?= $item->id ?>"><?= $item->username ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <h5 class="card-header">Poin Kriteria</h5>
-                        <div class="card-body">
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
                             <?php foreach ($criteria as $item) : ?>
                                 <div class="form-group">
                                     <label class="col-form-label"><?= $item->nama_kriteria ?></label>
                                     <input type="number" name="<?= strtolower(str_replace(' ', '_', $item->nama_kriteria)) ?>[]" min="1" max="10" class="form-control" required>
                                 </div>
                             <?php endforeach; ?>
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Apply</button>
+                            <button type="submit" class="btn btn-primary">Apply</button>
+                        </form>
+
                 </div>
             </div>
             <!-- ============================================================== -->

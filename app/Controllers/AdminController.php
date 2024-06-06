@@ -4,25 +4,29 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\UserModel;
+use App\Models\PoinKriteriaModel;
+use App\Models\PoinHasilModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class AdminController extends BaseController
 {
     protected $db, $builder, $builderCrit;
-    public $userModel;
+    public $userModel, $poinKriteriaModel, $poinHasilModel;
 
-    public function __construct() // All Configs, DB, and Models Required
+    public function __construct()
     {
-        $this->db      = \Config\Database::connect();
+        $this->db = \Config\Database::connect();
         $this->builder = $this->db->table('users');
         $this->builderCrit = $this->db->table('kriteria');
         $this->userModel = new UserModel();
+        $this->poinKriteriaModel = new PoinKriteriaModel();
+        $this->poinHasilModel = new PoinHasilModel();
     }
 
     public function index()
     {
         $data = [
-            'title'     => 'Dasbor Admin',
+            'title' => 'Dasbor Admin',
         ];
 
         return view('index', $data);
@@ -36,16 +40,15 @@ class AdminController extends BaseController
         $this->builder->join('auth_groups', 'auth_groups.id = auth_groups_users.group_id');
         $query = $this->builder->get();
 
-
         $data = [
-            'title'     => 'Daftar Karyawan',
+            'title' => 'Daftar Karyawan',
             'users' => $query->getResult(),
         ];
 
         return view('admin/user_list', $data);
     }
 
-    public function karyawanDetail($id) // Show User's Individual Details
+    public function karyawanDetail($id)
     {
         $this->builder->select('*, profil_karyawan.id as idprofil');
         $this->builder->where('id_user', $id);
@@ -53,14 +56,14 @@ class AdminController extends BaseController
         $query = $this->builder->get();
 
         $data = [
-            'title'     => 'Data Karyawan',
-            'profil'    => $query->getResult()
+            'title' => 'Data Karyawan',
+            'profil' => $query->getResult()
         ];
 
         return view('admin/user_detail', $data);
     }
 
-    public function deleteUser($id) // Delete Registered User
+    public function deleteUser($id)
     {
         $this->builder->where('id', $id);
         $this->builder->delete();
@@ -85,57 +88,57 @@ class AdminController extends BaseController
         $this->builderCrit->select();
         $querycrit = $this->builderCrit->get();
 
-
         $data = [
-            'title'     => 'Formulir Perhitungan Poin',
+            'title' => 'Formulir Perhitungan Poin',
             'users' => $query->getResult(),
             'criteria' => $querycrit->getResult(),
         ];
 
         return view('admin/topsis_form', $data);
-        // dd($data);
     }
 
     public function calculate()
     {
         // Ambil data dari request
         $karyawan = $this->request->getPost('karyawan');
-        $pengalamanKerja = $this->request->getPost('pengalaman_kerja');
-        $pendidikan = $this->request->getPost('pendidikan');
-        $keterampilanKomunikasi = $this->request->getPost('keterampilan_komunikasi');
-        $keterampilanManajerial = $this->request->getPost('keterampilan_manajerial');
-        $keterampilanTeknis = $this->request->getPost('keterampilan_teknis');
-        $keterampilanAnalitis = $this->request->getPost('keterampilan_analitis');
-        $ketepatanWaktu = $this->request->getPost('ketepatan_waktu');
-        $kinerja = $this->request->getPost('kinerja');
+        $kriteriaData = $this->request->getPost();
 
-        // Bobot kriteria
-        $bobot = [
-            0.20, // Pengalaman Kerja
-            0.15, // Pendidikan
-            0.15, // Keterampilan Komunikasi
-            0.15, // Keterampilan Manajerial
-            0.10, // Keterampilan Teknis
-            0.10, // Keterampilan Analitis
-            0.10, // Ketepatan Waktu
-            0.05  // Kinerja
-        ];
+        // Ambil bobot dari database
+        $querycrit = $this->builderCrit->get();
+        $bobot = [];
+        $criteriaKeys = [];
+        foreach ($querycrit->getResult() as $index => $criterion) {
+            $bobot[] = $criterion->bobot;
+            $criteriaKeys[] = strtolower(str_replace(' ', '_', $criterion->nama_kriteria));
+        }
+
+        // // Debug data untuk memastikan data benar sebelum disimpan
+        // echo '<pre>';
+        // print_r($criteriaKeys);
+        // print_r($kriteriaData);
+        // echo '</pre>';
+        // exit();
+
+        // Simpan poin kriteria ke dalam database
+        foreach ($karyawan as $index => $karyawanId) {
+            $dataKriteria = [];
+            foreach ($criteriaKeys as $key) {
+                if(isset($kriteriaData[$key][$index])) {
+                    $dataKriteria[$key] = $kriteriaData[$key][$index];
+                } else {
+                    $dataKriteria[$key] = null; // atau nilai default lainnya
+                }
+            }
+            $dataKriteria['id_user'] = $karyawanId;
+            $this->poinKriteriaModel->insert($dataKriteria);
+        }
 
         // Gabungkan poin kriteria untuk setiap karyawan
-        $kriteria = [
-            $pengalamanKerja,
-            $pendidikan,
-            $keterampilanKomunikasi,
-            $keterampilanManajerial,
-            $keterampilanTeknis,
-            $keterampilanAnalitis,
-            $ketepatanWaktu,
-            $kinerja
-        ];
-
         $dataKaryawan = [];
         foreach ($karyawan as $index => $karyawanId) {
-            $dataKaryawan[$karyawanId] = array_column($kriteria, $index);
+            foreach ($criteriaKeys as $key) {
+                $dataKaryawan[$karyawanId][] = $kriteriaData[$key][$index];
+            }
         }
 
         // Langkah-langkah perhitungan TOPSIS
@@ -209,6 +212,11 @@ class AdminController extends BaseController
             }
         }
 
+        // Simpan hasil perhitungan ke database
+        foreach ($nilaiPreferensi as $id => $nilai) {
+            $this->poinHasilModel->insert(['poin_spk' => $nilai, 'id_user' => $id]);
+        }
+
         // Pilih karyawan dengan nilai preferensi tertinggi
         $karyawanTerpilih = array_search(max($nilaiPreferensi), $nilaiPreferensi);
         $hasilPoinKalkulasi = $nilaiPreferensi[$karyawanTerpilih];
@@ -221,5 +229,20 @@ class AdminController extends BaseController
         ];
 
         return view('admin/topsis_result', $data);
+    }
+
+    public function hasilTopsis()
+    {
+        $this->builder->select('users.username, profil_karyawan.nama_lengkap, poin_hasil.poin_spk');
+        $this->builder->join('profil_karyawan', 'profil_karyawan.id_user = users.id');
+        $this->builder->join('poin_hasil', 'poin_hasil.id_user = users.id');
+        $query = $this->builder->get();
+
+        $data = [
+            'title' => 'Tabel Hasil Rangking',
+            'hasil' => $query->getResult()
+        ];
+
+        return view('admin/topsis_result_table', $data);
     }
 }

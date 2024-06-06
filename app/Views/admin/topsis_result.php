@@ -9,8 +9,8 @@
             <!-- Select Options  -->
             <!-- ============================================================== -->
             <h1>Hasil Perhitungan TOPSIS</h1>
-    <p>Nama Karyawan Terpilih: <?= $nama_karyawan_terpilih ?></p>
-    <p>Hasil Poin Kalkulasi: <?= $hasil_poin_kalkulasi ?></p>
+            <p>Karyawan Terpilih: <?= $nama_karyawan_terpilih ?></p>
+            <p>Hasil Poin Kalkulasi: <?= $hasil_poin_kalkulasi ?></p>
             <!-- ============================================================== -->
             <!-- End Select Options  -->
             <!-- ============================================================== -->
