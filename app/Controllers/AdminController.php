@@ -4,8 +4,8 @@ namespace App\Controllers;
 
 use App\Controllers\BaseController;
 use App\Models\UserModel;
-use App\Models\PoinKriteriaModel;
-use App\Models\PoinHasilModel;
+use App\Models\CriteriaPointModel;
+use App\Models\ResultPointModel;
 use CodeIgniter\HTTP\ResponseInterface;
 
 class AdminController extends BaseController
@@ -19,8 +19,8 @@ class AdminController extends BaseController
         $this->builder = $this->db->table('users');
         $this->builderCrit = $this->db->table('kriteria');
         $this->userModel = new UserModel();
-        $this->poinKriteriaModel = new PoinKriteriaModel();
-        $this->poinHasilModel = new PoinHasilModel();
+        $this->poinKriteriaModel = new CriteriaPointModel();
+        $this->poinHasilModel = new ResultPointModel();
     }
 
     public function index()
@@ -101,45 +101,60 @@ class AdminController extends BaseController
     {
         // Ambil data dari request
         $karyawan = $this->request->getPost('karyawan');
-        $kriteriaData = $this->request->getPost();
+        $pengalamanKerja = $this->request->getPost('pengalaman_kerja');
+        $pendidikan = $this->request->getPost('pendidikan');
+        $keterampilanKomunikasi = $this->request->getPost('keterampilan_komunikasi');
+        $keterampilanManajerial = $this->request->getPost('keterampilan_manajerial');
+        $keterampilanTeknis = $this->request->getPost('keterampilan_teknis');
+        $keterampilanAnalitis = $this->request->getPost('keterampilan_analitis');
+        $ketepatanWaktu = $this->request->getPost('ketepatan_waktu');
+        $kinerja = $this->request->getPost('kinerja');
+
+        foreach ($karyawan as $index => $karyawanId) {
+            $dataKriteria = [
+                'id_user' => $karyawanId,
+                'poin_pengalamankerja' => $pengalamanKerja[$index],
+                'poin_pendidikan' => $pendidikan[$index],
+                'poin_komunikasi' => $keterampilanKomunikasi[$index],
+                'poin_manajerial' => $keterampilanManajerial[$index],
+                'poin_teknis' => $keterampilanTeknis[$index],
+                'poin_analitis' => $keterampilanAnalitis[$index],
+                'poin_ketepatanwaktu' => $ketepatanWaktu[$index],
+                'poin_kinerja' => $kinerja[$index],
+            ];
+            $this->poinKriteriaModel->insert($dataKriteria);
+        }
 
         // Ambil bobot dari database
         $querycrit = $this->builderCrit->get();
         $bobot = [];
-        $criteriaKeys = [];
-        foreach ($querycrit->getResult() as $index => $criterion) {
+        foreach ($querycrit->getResult() as $criterion) {
             $bobot[] = $criterion->bobot;
-            $criteriaKeys[] = strtolower(str_replace(' ', '_', $criterion->nama_kriteria));
         }
 
-        // // Debug data untuk memastikan data benar sebelum disimpan
-        // echo '<pre>';
-        // print_r($criteriaKeys);
-        // print_r($kriteriaData);
-        // echo '</pre>';
-        // exit();
-
-        // Simpan poin kriteria ke dalam database
-        foreach ($karyawan as $index => $karyawanId) {
-            $dataKriteria = [];
-            foreach ($criteriaKeys as $key) {
-                if(isset($kriteriaData[$key][$index])) {
-                    $dataKriteria[$key] = $kriteriaData[$key][$index];
-                } else {
-                    $dataKriteria[$key] = null; // atau nilai default lainnya
-                }
-            }
-            $dataKriteria['id_user'] = $karyawanId;
-            $this->poinKriteriaModel->insert($dataKriteria);
-        }
-
-        // Gabungkan poin kriteria untuk setiap karyawan
+        // Ambil data poin kriteria dari database
+        $poinKriteria = $this->poinKriteriaModel->findAll();
         $dataKaryawan = [];
-        foreach ($karyawan as $index => $karyawanId) {
-            foreach ($criteriaKeys as $key) {
-                $dataKaryawan[$karyawanId][] = $kriteriaData[$key][$index];
-            }
+        foreach ($poinKriteria as $poin) {
+            $dataKaryawan[$poin['id_user']] = [
+                $poin['poin_pengalamankerja'],
+                $poin['poin_pendidikan'],
+                $poin['poin_komunikasi'],
+                $poin['poin_manajerial'],
+                $poin['poin_teknis'],
+                $poin['poin_analitis'],
+                $poin['poin_ketepatanwaktu'],
+                $poin['poin_kinerja']
+            ];
         }
+
+        // // Gabungkan poin kriteria untuk setiap karyawan
+        // $dataKaryawan = [];
+        // foreach ($karyawan as $index => $karyawanId) {
+        //     foreach ($criteriaKeys as $key) {
+        //         $dataKaryawan[$karyawanId][] = $kriteriaData[$key][$index];
+        //     }
+        // }
 
         // Langkah-langkah perhitungan TOPSIS
 
@@ -212,14 +227,18 @@ class AdminController extends BaseController
             }
         }
 
-        // Simpan hasil perhitungan ke database
-        foreach ($nilaiPreferensi as $id => $nilai) {
-            $this->poinHasilModel->insert(['poin_spk' => $nilai, 'id_user' => $id]);
-        }
-
         // Pilih karyawan dengan nilai preferensi tertinggi
         $karyawanTerpilih = array_search(max($nilaiPreferensi), $nilaiPreferensi);
         $hasilPoinKalkulasi = $nilaiPreferensi[$karyawanTerpilih];
+
+        // Simpan hasil ke tabel poin_hasil
+        foreach ($nilaiPreferensi as $id_user => $poin_spk) {
+            $dataHasil = [
+                'id_user' => $id_user,
+                'poin_spk' => $poin_spk
+            ];
+            $this->db->table('poin_hasil')->insert($dataHasil);
+        }
 
         // Kirim hasil ke view topsis_result.php
         $data = [
@@ -230,6 +249,69 @@ class AdminController extends BaseController
 
         return view('admin/topsis_result', $data);
     }
+
+    private function topsis($matrix, $weights, $benefit)
+    {
+        $numAlternatives = count($matrix);
+        $numCriteria = count($matrix[0]);
+
+        // Normalisasi matriks keputusan
+        $normalizedMatrix = [];
+        for ($j = 0; $j < $numCriteria; $j++) {
+            $sum = 0;
+            for ($i = 0; $i < $numAlternatives; $i++) {
+                $sum += pow($matrix[$i][$j], 2);
+            }
+            $sqrtSum = sqrt($sum);
+            for ($i = 0; $i < $numAlternatives; $i++) {
+                $normalizedMatrix[$i][$j] = $matrix[$i][$j] / $sqrtSum;
+            }
+        }
+
+        // Menentukan matriks keputusan yang telah ternormalisasi dan tertimbang
+        $weightedNormalizedMatrix = [];
+        for ($i = 0; $i < $numAlternatives; $i++) {
+            for ($j = 0; $j < $numCriteria; $j++) {
+                $weightedNormalizedMatrix[$i][$j] = $normalizedMatrix[$i][$j] * $weights[$j];
+            }
+        }
+
+        // Menentukan solusi ideal positif dan negatif
+        $positiveIdealSolution = [];
+        $negativeIdealSolution = [];
+        for ($j = 0; $j < $numCriteria; $j++) {
+            if ($benefit[$j]) {
+                $positiveIdealSolution[$j] = max(array_column($weightedNormalizedMatrix, $j));
+                $negativeIdealSolution[$j] = min(array_column($weightedNormalizedMatrix, $j));
+            } else {
+                $positiveIdealSolution[$j] = min(array_column($weightedNormalizedMatrix, $j));
+                $negativeIdealSolution[$j] = max(array_column($weightedNormalizedMatrix, $j));
+            }
+        }
+
+        // Menghitung jarak antara masing-masing alternatif dengan solusi ideal positif dan negatif
+        $positiveDistances = [];
+        $negativeDistances = [];
+        for ($i = 0; $i < $numAlternatives; $i++) {
+            $positiveDistances[$i] = 0;
+            $negativeDistances[$i] = 0;
+            for ($j = 0; $j < $numCriteria; $j++) {
+                $positiveDistances[$i] += pow($weightedNormalizedMatrix[$i][$j] - $positiveIdealSolution[$j], 2);
+                $negativeDistances[$i] += pow($weightedNormalizedMatrix[$i][$j] - $negativeIdealSolution[$j], 2);
+            }
+            $positiveDistances[$i] = sqrt($positiveDistances[$i]);
+            $negativeDistances[$i] = sqrt($negativeDistances[$i]);
+        }
+
+        // Menghitung nilai preferensi untuk setiap alternatif
+        $preferences = [];
+        for ($i = 0; $i < $numAlternatives; $i++) {
+            $preferences[$i] = $negativeDistances[$i] / ($positiveDistances[$i] + $negativeDistances[$i]);
+        }
+
+        return $preferences;
+    }
+
 
     public function hasilTopsis()
     {
