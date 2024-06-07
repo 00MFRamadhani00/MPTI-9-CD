@@ -10,7 +10,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 
 class AdminController extends BaseController
 {
-    protected $db, $builder, $builderCrit;
+    protected $db, $builder, $builderCrit, $builderProf;
     public $userModel, $poinKriteriaModel, $poinHasilModel;
 
     public function __construct()
@@ -18,6 +18,7 @@ class AdminController extends BaseController
         $this->db = \Config\Database::connect();
         $this->builder = $this->db->table('users');
         $this->builderCrit = $this->db->table('kriteria');
+        $this->builderProf = $this->db->table('profil_karyawan');
         $this->userModel = new UserModel();
         $this->poinKriteriaModel = new CriteriaPointModel();
         $this->poinHasilModel = new ResultPointModel();
@@ -78,12 +79,8 @@ class AdminController extends BaseController
 
     public function topsisForm()
     {
-        $this->builder->select();
-        $this->builder->where('name !=', 'admin');
-        $this->builder->join('auth_groups_users', 'auth_groups_users.user_id = users.id');
-        $this->builder->join('auth_groups', 'auth_groups.id = auth_groups_users.group_id');
-        $this->builder->join('profil_karyawan', 'profil_karyawan.id_user = users.id');
-        $query = $this->builder->get();
+        $this->builderProf->select();
+        $query = $this->builderProf->get();
 
         $this->builderCrit->select();
         $querycrit = $this->builderCrit->get();

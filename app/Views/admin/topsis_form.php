@@ -15,14 +15,15 @@
                         <p>Silahkan pilih karyawan dan poin kriteria masing-masing, yang kemudian akan dikalkulasi menggunakan metode TOPSIS.</p>
                     </div>
                     <div class="card">
-                        <h5 class="card-header">Pilih Karyawan</h5>
+                        <h5 class="card-header">Formulir Kalkulasi</h5>
                         <div class="card-body">
                         <form action="<?= base_url('/calculate-topsis') ?>" method="post">
                             <div class="form-group">
+                                <label class="col-form-label">Pilih Karyawan</label>
                                 <select class="form-control" name="karyawan[]" required>
                                     <option selected disabled>Pilih Karyawan</option>
                                     <?php foreach ($users as $item) : ?>
-                                        <option value="<?= $item->id ?>"><?= $item->username ?></option>
+                                        <option value="<?= $item->id_user ?>"><?= $item->nama_lengkap ?></option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
