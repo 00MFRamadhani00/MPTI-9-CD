@@ -237,14 +237,20 @@ class AdminController extends BaseController
             $this->db->table('poin_hasil')->insert($dataHasil);
         }
 
+        // Ambil nama karyawan untuk display result
+        $this->builderProf->select();
+        $this->builderProf->where('id_user', $karyawanTerpilih);
+        $querynama = $this->builderProf->get();
+
         // Kirim hasil ke view topsis_result.php
         $data = [
             'title' => 'Hasil TOPSIS',
-            'nama_karyawan_terpilih' => $karyawanTerpilih,
+            'nama_karyawan_terpilih' => $querynama->getResult(),
             'hasil_poin_kalkulasi' => $hasilPoinKalkulasi
         ];
 
         return view('admin/topsis_result', $data);
+        // dd($data);
     }
 
 
